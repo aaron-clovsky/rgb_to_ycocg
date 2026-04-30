@@ -2,7 +2,7 @@
 
 ## MOTIVATION
 
-While YCoCg seems to be the modern standard for Luma + Chrominance encoding, finding an integer based encoder/decoder implementation that actually works when tested is harder than it should be. The [original paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/Malvar_Sullivan_YCoCg-R_JVT-I014r3-2.pdf) is also not very clear on some important points which can make correct implementation difficult.
+While YCoCg seems to be the modern standard for Luma + Chrominance encoding finding an integer based encoder/decoder implementation that actually works when tested is harder than it should be. The [original paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/Malvar_Sullivan_YCoCg-R_JVT-I014r3-2.pdf) is also not very clear on some important points which can make correct implementation difficult.
 
 Hopefully this helps anyone trying to implement YUV 4:2:2 decompression to RGB in FPGA.
 
@@ -40,7 +40,7 @@ Converts a 24-bit RGB value to a 24-bit YCoCg value
 Converts a 24-bit YCoCg value to a 24-bit RGB value
 
 ```analyze```
-Converts every possible 24-bit RGB value to 24-bit YCoCg and then converts each value back to 24-bit RGB and gathers statistics on conversion errors
+Converts every possible 24-bit RGB value to 24-bit YCoCg and then converts that value back to 24-bit RGB and gathers statistics on conversion errors
 
 ```all```
 Prints the following in 9 column CSV output:
@@ -56,7 +56,7 @@ Prints the following in 6 column CSV output:
 ```allYCoCg```
 Prints the following in 6 column CSV output:
 - Columns 1-3: Every possible 24-bit YCoCg value
-- Columns 4-6: The 24-bit RGB conversion of the YCoCg values in columns 4-6
+- Columns 4-6: The 24-bit RGB conversion of the YCoCg values in columns 1-3
 
 ## NOTES
 
@@ -94,7 +94,7 @@ Prints the following in 6 column CSV output:
 	- *Co = (R - B + 1) / 2* 
 	- *Cg = ((G * 2) - R - B + 2) / 4* 
 
-    While this generally helps, there are 256 cases where r is 255 swaps with b after encoding and decoding, so we remove the adjustment on Co:
+    While this generally helps, there are 256 cases where r is 255 and swaps with b after encoding and then decoding, so we remove the adjustment on Co:
     - *Y = (R + (G * 2) + B + 2) / 4* 
 	- *Co = (R - B) / 2* 
 	- *Cg = ((G * 2) - R - B + 2) / 4* 
@@ -104,7 +104,7 @@ Prints the following in 6 column CSV output:
 	- *Co = (R - B) / 2* 
 	- *Cg = ((G * 2) - R - B + 1) / 4* 
 	
-	This results in RGB(0, 255, 0) becoming YCoCg(127,0,127) which in turn converts back to RGB(0, 254, 0), which is a much better result and doesn't seem to have any other negative effects overall
+	This results in RGB(0, 255, 0) becoming YCoCg(127, 0, 127) which in turn converts back to RGB(0, 254, 0), which is a much better result and doesn't seem to have any other negative effects overall
 
 - The accuracy of these conversion functions is such that after converting *RGB->YCoCg->RGB* with an output precision of 24-bits at each step ~25% of the doubly converted RGB values are identical to the original values and the remaining ~75% differ from the original by exactly one in exactly one color channel
 
