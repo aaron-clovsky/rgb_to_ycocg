@@ -94,7 +94,7 @@ Prints the following in 6 column CSV output:
 	- *Co = (R - B + 1) / 2* 
 	- *Cg = ((G * 2) - R - B + 2) / 4* 
 
-    While this generally helps, there are 256 cases where r is 255 and swaps with b after encoding and then decoding, so we remove the adjustment on Co:
+    While this generally helps, there are 256 cases where r is 255 and b is zero and r swaps with b after encoding and then decoding, so we remove the adjustment on Co:
     - *Y = (R + (G * 2) + B + 2) / 4* 
 	- *Co = (R - B) / 2* 
 	- *Cg = ((G * 2) - R - B + 2) / 4* 
