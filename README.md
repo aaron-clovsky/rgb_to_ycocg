@@ -2,7 +2,7 @@
 
 ## MOTIVATION
 
-While YCoCg seems to be the modern standard for Luma + Chrominance encoding, finding an integer based encoder/decoder implementation that actually works when tested is harder than it should be. The [original paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/Malvar_Sullivan_YCoCg-R_JVT-I014r3-2.pdf) is also not very clear on some important points which make implementation in all-integer situations (especially important for an HDL implementation) difficult.
+While YCoCg seems to be the modern standard for Luma + Chrominance encoding, finding an integer based encoder/decoder implementation that actually works when tested is harder than it should be. The [original paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/Malvar_Sullivan_YCoCg-R_JVT-I014r3-2.pdf) is also not very clear on some important points which can make correct implementation difficult.
 
 Hopefully this helps anyone trying to implement YUV 4:2:2 decompression to RGB in FPGA.
 
@@ -25,7 +25,7 @@ The authors of the [original paper](https://www.microsoft.com/en-us/research/wp-
 
 ```
 rgb_to_ycocg <MODE> [OPTIONS]
- modes: RGB | YCoCg | analyze | all | allRGB | allYCoCg"
+ modes: RGB | YCoCg | analyze | all | allRGB | allYCoCg
   RGB Options: <R> <G> <B>
   YCoCg Options: <Y> <Co> <Cg>
 ```
@@ -40,23 +40,23 @@ Converts a 24-bit RGB value to a 24-bit YCoCg value
 Converts a 24-bit YCoCg value to a 24-bit RGB value
 
 ```analyze```
-Examines every possible 24-bit RGB value, converts each value to 24-bit YCoCg and then converts each value back to 24-bit RGB and gathers statistics on conversion errors
+Converts every possible 24-bit RGB value to 24-bit YCoCg and then converts each value back to 24-bit RGB and gathers statistics on conversion errors
 
 ```all```
 Prints the following in 9 column CSV output:
-Columns 1-3: Every possible 24-bit RGB value
-Columns 4-6: The 24-bit YCoCg conversion of the RGB values in columns 1-3
-Columns 7-9: The 24-bit RGB conversion of the YCoCg values in columns 4-6
+- Columns 1-3: Every possible 24-bit RGB value
+- Columns 4-6: The 24-bit YCoCg conversion of the RGB values in columns 1-3
+- Columns 7-9: The 24-bit RGB conversion of the YCoCg values in columns 4-6
 
 ```allRGB```
 Prints the following in 6 column CSV output:
-Columns 1-3: Every possible 24-bit RGB value
-Columns 4-6: The 24-bit YCoCg conversion of the RGB values in columns 1-3
+- Columns 1-3: Every possible 24-bit RGB value
+- Columns 4-6: The 24-bit YCoCg conversion of the RGB values in columns 1-3
 
 ```allYCoCg```
 Prints the following in 6 column CSV output:
-Columns 1-3: Every possible 24-bit YCoCg value
-Columns 4-6: The 24-bit RGB conversion of the YCoCg values in columns 4-6
+- Columns 1-3: Every possible 24-bit YCoCg value
+- Columns 4-6: The 24-bit RGB conversion of the YCoCg values in columns 4-6
 
 ## NOTES
 
@@ -82,7 +82,7 @@ Columns 4-6: The 24-bit RGB conversion of the YCoCg values in columns 4-6
 	
 	Are not usable as written, because the next sentence says: 
     
-    "which is identical to the original definition, but with Co and Cg scaled up by a factor of two"  
+    *"which is identical to the original definition, but with Co and Cg scaled up by a factor of two"* 
     
     Which means we really have:
 	- *Y = G / 2 + (R + B) / 4* 
@@ -91,10 +91,15 @@ Columns 4-6: The 24-bit RGB conversion of the YCoCg values in columns 4-6
 	
     While these work, they don't work as well as they could when doing integer divides because of chop rounding, to fix this we make the following changes:
     - *Y = (R + (G * 2) + B + 2) / 4* 
+	- *Co = (R - B + 1) / 2* 
+	- *Cg = ((G * 2) - R - B + 2) / 4* 
+
+    While this generally helps, there are 256 cases where r is 255 swaps with b after encoding and decoding, so we remove the adjustment on Co:
+    - *Y = (R + (G * 2) + B + 2) / 4* 
 	- *Co = (R - B) / 2* 
 	- *Cg = ((G * 2) - R - B + 2) / 4* 
 
-	This fixes nearly all of the problems of doing the calculations as integers but leaves eactly one glaring outlier: RGB(0, 255, 0) becomes YCoCg(128,0,128) which in turn converts back to RGB(255, 0, 255), which is an especially bad result and is fixed by making the following adjustment:
+	This fixes nearly all of the problems of doing the calculations as integers but leaves eactly one glaring outlier: RGB(0, 255, 0) becomes YCoCg(128, 0, 128) which in turn converts back to RGB(255, 0, 255), which is an especially bad result and is fixed by making the following adjustment:
     - *Y = (R + (G * 2) + B + 1) / 4* 
 	- *Co = (R - B) / 2* 
 	- *Cg = ((G * 2) - R - B + 1) / 4* 
